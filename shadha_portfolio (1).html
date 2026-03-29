@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadha Mohammed — Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f; --surface: #141418; --card: #1a1a20; --border: #2a2a35;
+    --accent: #c8a96e; --accent2: #7c9e8f; --text: #e8e4dc; --muted: #7a7a8a; --white: #f5f2ec;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; line-height:1.7; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:9998; opacity:.5; }
+
+  /* ── MODALS ── */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:2000; align-items:center; justify-content:center; padding:1.5rem; backdrop-filter:blur(8px); }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:4px; width:100%; max-width:700px; max-height:90vh; overflow-y:auto; position:relative; animation:modalIn .3s ease; }
+  @keyframes modalIn { from{opacity:0;transform:scale(.95) translateY(14px)} to{opacity:1;transform:none} }
+  .modal-topbar { position:sticky; top:0; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:1.2rem 1.5rem; z-index:1; }
+  .modal-topbar-title { font-family:'Cormorant Garamond',serif; font-size:1.5rem; color:var(--white); }
+  .modal-topbar-title em { font-style:italic; color:var(--accent); }
+  .modal-x { background:var(--card); border:1px solid var(--border); color:var(--muted); width:32px; height:32px; border-radius:50%; font-size:.9rem; cursor:pointer; transition:color .2s,border-color .2s; }
+  .modal-x:hover { color:var(--white); border-color:var(--accent); }
+  .modal-body { padding:1.5rem; }
+
+  /* skill images */
+  .skill-imgs-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:.75rem; margin-bottom:1rem; }
+  .sim-wrap { position:relative; border-radius:4px; overflow:hidden; background:var(--card); border:1px solid var(--border); aspect-ratio:4/3; }
+  .sim-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+  .sim-remove { position:absolute; top:6px; right:6px; background:rgba(0,0,0,.75); border:none; color:#fff; width:26px; height:26px; border-radius:50%; font-size:.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .add-img-tile { aspect-ratio:4/3; border:1.5px dashed var(--border); border-radius:4px; background:none; color:var(--muted); font-size:.8rem; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.4rem; transition:border-color .2s,color .2s; }
+  .add-img-tile:hover { border-color:var(--accent); color:var(--accent); }
+  .add-img-tile .tile-icon { font-size:1.6rem; }
+
+  .modal-textarea { width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:.8rem 1rem; border-radius:4px; font-family:'DM Sans',sans-serif; font-size:.9rem; line-height:1.7; min-height:110px; resize:vertical; outline:none; transition:border-color .2s; margin-bottom:1rem; }
+  .modal-textarea:focus { border-color:var(--accent); }
+  .modal-label { font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:.5rem; }
+
+  /* cert */
+  .cert-drop { border:1.5px dashed var(--border); border-radius:4px; padding:2.5rem 1rem; text-align:center; cursor:pointer; transition:border-color .2s,color .2s; color:var(--muted); font-size:.875rem; }
+  .cert-drop:hover { border-color:var(--accent); color:var(--accent); }
+  .cert-drop .cert-icon { font-size:2.2rem; display:block; margin-bottom:.5rem; }
+  .cert-img-preview { width:100%; border-radius:4px; border:1px solid var(--border); display:none; margin-bottom:.6rem; }
+  .cert-remove-btn { background:none; border:none; color:#e05a5a; font-size:.8rem; cursor:pointer; margin-bottom:.8rem; display:none; }
+
+  .modal-save { background:var(--accent); color:#000; border:none; padding:.65rem 1.8rem; border-radius:2px; font-size:.85rem; font-weight:500; cursor:pointer; letter-spacing:.04em; transition:opacity .2s; margin-top:.5rem; }
+  .modal-save:hover { opacity:.85; }
+  .modal-divider { border:none; border-top:1px solid var(--border); margin:1.2rem 0; }
+
+  /* ── EDIT FAB & PANEL ── */
+  #edit-fab { position:fixed; bottom:2rem; right:2rem; z-index:1000; background:var(--accent); color:#000; border:none; width:56px; height:56px; border-radius:50%; font-size:1.4rem; cursor:pointer; box-shadow:0 4px 24px rgba(200,169,110,.4); transition:transform .2s,box-shadow .2s; display:flex; align-items:center; justify-content:center; }
+  #edit-fab:hover { transform:scale(1.1); box-shadow:0 6px 32px rgba(200,169,110,.6); }
+  #edit-panel { position:fixed; top:0; right:-440px; width:420px; height:100vh; background:var(--surface); border-left:1px solid var(--border); z-index:999; overflow-y:auto; transition:right .35s cubic-bezier(.4,0,.2,1); padding:2rem; }
+  #edit-panel.open { right:0; }
+  #edit-panel h2 { font-family:'Cormorant Garamond',serif; font-size:1.6rem; color:var(--accent); margin-bottom:1.5rem; }
+  .ep-close { position:absolute; top:1.5rem; right:1.5rem; background:none; border:none; color:var(--muted); font-size:1.4rem; cursor:pointer; }
+  .ep-section { margin-bottom:2rem; }
+  .ep-section h3 { font-size:.75rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:.8rem; padding-bottom:.4rem; border-bottom:1px solid var(--border); }
+  .ep-field { margin-bottom:1rem; }
+  .ep-field label { display:block; font-size:.8rem; color:var(--muted); margin-bottom:.3rem; }
+  .ep-field input,.ep-field textarea { width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:.6rem .8rem; border-radius:6px; font-family:'DM Sans',sans-serif; font-size:.875rem; outline:none; transition:border-color .2s; }
+  .ep-field input:focus,.ep-field textarea:focus { border-color:var(--accent); }
+  .ep-field textarea { min-height:80px; resize:vertical; }
+  .ep-photo-preview { width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); display:block; margin:.5rem 0; }
+  .ep-btn { background:var(--accent); color:#000; border:none; padding:.5rem 1.2rem; border-radius:6px; font-size:.85rem; font-weight:500; cursor:pointer; margin-top:.3rem; transition:opacity .2s; }
+  .ep-btn:hover { opacity:.85; }
+  .project-entry { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:.8rem; }
+  .project-entry .ep-field { margin-bottom:.5rem; }
+  #add-project-btn { background:none; border:1px dashed var(--accent2); color:var(--accent2); width:100%; padding:.5rem; border-radius:6px; cursor:pointer; font-size:.85rem; transition:background .2s; }
+  #add-project-btn:hover { background:rgba(124,158,143,.08); }
+  .remove-project { background:none; border:none; color:#e05a5a; font-size:.75rem; cursor:pointer; float:right; padding:0; }
+
+  /* ── HERO ── */
+  #hero { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; align-items:center; padding:6rem 8rem; position:relative; gap:4rem; }
+  #hero::after { content:''; position:absolute; top:-20%; right:-10%; width:600px; height:600px; background:radial-gradient(circle,rgba(200,169,110,.08) 0%,transparent 65%); pointer-events:none; }
+  .hero-text { position:relative; z-index:1; }
+  .hero-eyebrow { font-size:.75rem; letter-spacing:.2em; text-transform:uppercase; color:var(--accent); margin-bottom:1.5rem; opacity:0; animation:fadeUp .8s .2s forwards; }
+  .hero-name { font-family:'Cormorant Garamond',serif; font-size:clamp(3.5rem,6vw,5.5rem); font-weight:300; line-height:1.05; color:var(--white); margin-bottom:1.5rem; opacity:0; animation:fadeUp .8s .35s forwards; }
+  .hero-name em { font-style:italic; color:var(--accent); }
+  .hero-bio { font-size:1rem; color:var(--muted); max-width:460px; line-height:1.8; margin-bottom:2.5rem; opacity:0; animation:fadeUp .8s .5s forwards; }
+  .hero-links { display:flex; gap:1rem; opacity:0; animation:fadeUp .8s .65s forwards; flex-wrap:wrap; }
+  .btn-primary { background:var(--accent); color:#000; padding:.75rem 2rem; border-radius:2px; text-decoration:none; font-size:.875rem; font-weight:500; letter-spacing:.04em; transition:opacity .2s; }
+  .btn-primary:hover { opacity:.85; }
+  .btn-ghost { border:1px solid var(--border); color:var(--text); padding:.75rem 2rem; border-radius:2px; text-decoration:none; font-size:.875rem; letter-spacing:.04em; transition:border-color .2s,color .2s; }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+  .hero-photo-side { display:flex; justify-content:center; align-items:center; opacity:0; animation:fadeUp .8s .4s forwards; }
+  .hero-photo-frame { position:relative; width:340px; min-height:200px; }
+  .hero-photo-frame::before { content:''; position:absolute; inset:-12px; border:1px solid var(--accent); border-radius:2px; opacity:.35; transform:rotate(2deg); pointer-events:none; }
+  #hero-img { width:100%; height:auto; max-width:100%; object-fit:contain; border-radius:2px; display:block; background:transparent; }
+  .hero-photo-placeholder { width:340px; height:420px; border-radius:2px; background:var(--card); border:1px dashed var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.5rem; color:var(--muted); font-size:.85rem; cursor:pointer; }
+  .hero-photo-placeholder span { font-size:2rem; }
+  .scroll-hint { position:absolute; bottom:2.5rem; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:.5rem; color:var(--muted); font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; }
+  .scroll-line { width:1px; height:50px; background:linear-gradient(to bottom,var(--accent),transparent); animation:scrollDrop 2s ease-in-out infinite; }
+  @keyframes scrollDrop { 0%,100%{transform:scaleY(0);transform-origin:top} 50%{transform:scaleY(1);transform-origin:top} }
+
+  /* ── SECTIONS ── */
+  section { padding:6rem 8rem; border-top:1px solid var(--border); }
+  .section-header { display:flex; align-items:baseline; gap:1.5rem; margin-bottom:4rem; }
+  .section-number { font-family:'Cormorant Garamond',serif; font-size:4rem; font-weight:300; color:var(--border); line-height:1; }
+  .section-title { font-family:'Cormorant Garamond',serif; font-size:2.8rem; font-weight:300; color:var(--white); line-height:1.1; }
+  .section-title em { font-style:italic; color:var(--accent); }
+
+  .about-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:5rem; align-items:start; }
+  .about-body { font-size:1.05rem; color:var(--muted); line-height:1.9; }
+
+  /* ── SKILLS ── */
+  .skills-list { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:.8rem; }
+  .skill-tag { background:var(--card); border:1px solid var(--border); color:var(--text); padding:.45rem 1rem; border-radius:2px; font-size:.8rem; letter-spacing:.04em; cursor:pointer; transition:border-color .2s,color .2s,background .2s; position:relative; user-select:none; }
+  .skill-tag:hover { border-color:var(--accent); color:var(--accent); background:rgba(200,169,110,.06); }
+  .skill-tag.filled::after { content:''; position:absolute; top:-3px; right:-3px; width:7px; height:7px; background:var(--accent); border-radius:50%; border:1.5px solid var(--bg); }
+  .skill-hint { font-size:.73rem; color:var(--muted); font-style:italic; }
+
+  .lang-row { display:flex; gap:2rem; margin-top:2rem; }
+  .lang-item { display:flex; flex-direction:column; gap:.2rem; }
+  .lang-name { font-size:1rem; color:var(--white); }
+  .lang-level { font-size:.75rem; color:var(--muted); letter-spacing:.06em; }
+
+  /* ── TIMELINE ── */
+  .timeline { position:relative; padding-left:2rem; }
+  .timeline::before { content:''; position:absolute; left:0; top:0; bottom:0; width:1px; background:linear-gradient(to bottom,var(--accent),transparent); }
+  .timeline-item { position:relative; padding-bottom:3.5rem; }
+  .timeline-item:last-child { padding-bottom:0; }
+  .timeline-dot { position:absolute; left:-2.3rem; top:.5rem; width:8px; height:8px; background:var(--accent); border-radius:50%; }
+  .tl-meta { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:.5rem; margin-bottom:.3rem; }
+  .tl-role { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:400; color:var(--white); }
+  .tl-date { font-size:.75rem; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; }
+  .tl-company { color:var(--accent2); font-size:.875rem; margin-bottom:.8rem; }
+  .tl-bullets { list-style:none; padding:0; }
+  .tl-bullets li { position:relative; padding-left:1.2rem; font-size:.9rem; color:var(--muted); margin-bottom:.4rem; line-height:1.6; }
+  .tl-bullets li::before { content:'—'; position:absolute; left:0; color:var(--accent); font-size:.7rem; top:.15rem; }
+
+  /* ── EDUCATION ── */
+  .edu-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:2rem; }
+  .edu-card { background:var(--card); border:1px solid var(--border); padding:2rem; border-radius:2px; position:relative; overflow:hidden; cursor:pointer; transition:border-color .3s,transform .2s; }
+  .edu-card:hover { border-color:var(--accent); transform:translateY(-3px); }
+  .edu-card::after { content:''; position:absolute; top:0; left:0; width:3px; height:100%; background:var(--accent); transform:scaleY(0); transform-origin:top; transition:transform .3s; }
+  .edu-card:hover::after { transform:scaleY(1); }
+  .edu-degree { font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:400; color:var(--white); margin-bottom:.4rem; }
+  .edu-school { color:var(--accent); font-size:.85rem; margin-bottom:.3rem; }
+  .edu-year { color:var(--muted); font-size:.8rem; letter-spacing:.06em; }
+  .edu-card-hint { font-size:.7rem; color:var(--accent2); margin-top:.9rem; }
+  .edu-card.has-data .edu-card-hint { color:var(--accent); }
+
+  /* ── PROJECTS ── */
+  .projects-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:2rem; }
+  .project-card { background:var(--card); border:1px solid var(--border); border-radius:2px; overflow:hidden; transition:transform .3s,border-color .3s; }
+  .project-card:hover { transform:translateY(-4px); border-color:var(--accent); }
+  .project-thumb { width:100%; height:180px; object-fit:cover; display:block; }
+  .project-thumb-placeholder { width:100%; height:180px; background:linear-gradient(135deg,var(--bg),var(--border)); display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
+  .project-body { padding:1.5rem; }
+  .project-title { font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:var(--white); margin-bottom:.5rem; }
+  .project-desc { font-size:.85rem; color:var(--muted); line-height:1.6; margin-bottom:1rem; }
+  .project-link { color:var(--accent); font-size:.8rem; text-decoration:none; letter-spacing:.06em; text-transform:uppercase; transition:opacity .2s; }
+  .project-link:hover { opacity:.7; }
+  .no-projects { color:var(--muted); font-size:.95rem; font-style:italic; text-align:center; padding:3rem; border:1px dashed var(--border); border-radius:2px; }
+
+  /* ── CONTACT ── */
+  .contact-inner { display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:center; }
+  .contact-text { font-family:'Cormorant Garamond',serif; font-size:2.5rem; font-weight:300; line-height:1.25; color:var(--white); }
+  .contact-text em { font-style:italic; color:var(--accent); }
+  .contact-info { display:flex; flex-direction:column; gap:1.2rem; }
+  .contact-row { display:flex; align-items:center; gap:1rem; font-size:.95rem; color:var(--muted); }
+  .contact-row a { color:var(--text); text-decoration:none; transition:color .2s; }
+  .contact-row a:hover { color:var(--accent); }
+  .contact-icon { width:36px; height:36px; background:var(--card); border:1px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; }
+
+  footer { padding:2rem 8rem; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; font-size:.8rem; color:var(--muted); flex-wrap:wrap; gap:1rem; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .reveal { opacity:0; transform:translateY(24px); transition:opacity .7s ease,transform .7s ease; }
+  .reveal.visible { opacity:1; transform:none; }
+
+  @media(max-width:900px){
+    #hero,section{padding:4rem 2rem}
+    #hero{grid-template-columns:1fr;text-align:center}
+    .hero-bio{margin:0 auto 2.5rem}
+    .hero-links{justify-content:center}
+    .hero-photo-side{order:-1}
+    .hero-photo-frame{width:220px;height:280px}
+    .about-grid,.contact-inner{grid-template-columns:1fr;gap:3rem}
+    footer{padding:2rem}
+    .section-title{font-size:2rem}
+    .skill-imgs-grid{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<!-- FAB -->
+<button id="edit-fab" onclick="togglePanel()" title="Edit Portfolio">✏️</button>
+
+<!-- ── EDIT PANEL ── -->
+<div id="edit-panel">
+  <button class="ep-close" onclick="togglePanel()">✕</button>
+  <h2>Edit Portfolio</h2>
+  <div class="ep-section">
+    <h3>Profile Photo</h3>
+    <img id="ep-photo-preview" class="ep-photo-preview" src="" style="display:none" alt="preview">
+    <input type="file" id="ep-photo-upload" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+    <button class="ep-btn" onclick="document.getElementById('ep-photo-upload').click()">Upload Photo</button>
+  </div>
+  <div class="ep-section">
+    <h3>Basic Info</h3>
+    <div class="ep-field"><label>Full Name</label><input id="ep-name" type="text" value="Shadha Mohammed" oninput="update()"></div>
+    <div class="ep-field"><label>Short Bio</label><textarea id="ep-bio" oninput="update()">Master's student in Software Engineering at UPM, blending a background in education and computer science to build meaningful technology. Passionate about UI/UX, sentiment analysis, and creating impactful learning tools.</textarea></div>
+  </div>
+  <div class="ep-section">
+    <h3>Contact</h3>
+    <div class="ep-field"><label>Email</label><input id="ep-email" type="text" value="mshatha860@gmail.com" oninput="update()"></div>
+    <div class="ep-field"><label>Phone</label><input id="ep-phone" type="text" value="+60 1128182403" oninput="update()"></div>
+    <div class="ep-field"><label>Location</label><input id="ep-location" type="text" value="Bukit Serdang, Malaysia" oninput="update()"></div>
+  </div>
+  <div class="ep-section">
+    <h3>Skills (comma-separated)</h3>
+    <div class="ep-field"><textarea id="ep-skills" oninput="update()">Sentiment Analysis, UI/UX Design, Project Management, Canva, Early Childhood Development, Classroom Organization, Team Work, Time Management, Fast Learner</textarea></div>
+    <p style="font-size:.75rem;color:var(--muted)">💡 Click any skill on the page to add images &amp; description.</p>
+  </div>
+  <div class="ep-section">
+    <h3>Projects / Websites</h3>
+    <div id="projects-list"></div>
+    <button id="add-project-btn" onclick="addProject()">+ Add Project</button>
+  </div>
+  <div class="ep-section">
+    <h3>💾 Save Your Changes</h3>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:.8rem;line-height:1.6;">Download the portfolio as an HTML file with all your edits, photos, and certificates saved inside it.</p>
+    <button class="ep-btn" style="width:100%;padding:.75rem;font-size:.9rem;" onclick="savePortfolio()">⬇ Download Portfolio</button>
+  </div>
+</div>
+
+<!-- ══ SKILL MODAL ══ -->
+<div class="modal-overlay" id="skill-modal">
+  <div class="modal-box">
+    <div class="modal-topbar">
+      <span class="modal-topbar-title" id="skill-modal-title">Skill</span>
+      <button class="modal-x" onclick="closeSkillModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <span class="modal-label">Images</span>
+      <div class="skill-imgs-grid" id="skill-imgs-grid">
+        <button class="add-img-tile" onclick="document.getElementById('skill-img-input').click()">
+          <span class="tile-icon">📷</span>Add Images
+        </button>
+      </div>
+      <input type="file" id="skill-img-input" accept="image/*" multiple style="display:none" onchange="handleSkillImages(event)">
+      <hr class="modal-divider">
+      <span class="modal-label">Description / Notes</span>
+      <textarea class="modal-textarea" id="skill-textarea" placeholder="Describe your experience, tools used, projects done with this skill…"></textarea>
+      <button class="modal-save" onclick="saveSkill()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDUCATION MODAL ══ -->
+<div class="modal-overlay" id="edu-modal">
+  <div class="modal-box">
+    <div class="modal-topbar">
+      <span class="modal-topbar-title" id="edu-modal-title">Degree</span>
+      <button class="modal-x" onclick="closeEduModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <span class="modal-label">Notes / Achievements</span>
+      <textarea class="modal-textarea" id="edu-textarea" placeholder="Thesis topic, key modules, GPA, achievements…"></textarea>
+      <hr class="modal-divider">
+      <span class="modal-label">Certificate / Degree Document</span>
+      <img id="cert-img-preview" class="cert-img-preview" alt="certificate">
+      <div class="cert-drop" id="cert-drop" onclick="document.getElementById('cert-input').click()">
+        <span class="cert-icon">🎓</span>
+        Click to upload your certificate image
+      </div>
+      <input type="file" id="cert-input" accept="image/*" style="display:none" onchange="handleCert(event)">
+      <button class="cert-remove-btn" id="cert-remove-btn" onclick="removeCert()">✕ Remove certificate</button>
+      <br>
+      <button class="modal-save" onclick="saveEdu()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-text">
+    <div class="hero-eyebrow">Portfolio</div>
+    <h1 class="hero-name">Shadha<br><em>Mohammed</em></h1>
+    <p class="hero-bio" id="bio-display"></p>
+    <div class="hero-links">
+      <a href="#contact" class="btn-primary" id="email-btn" onclick="event.preventDefault();smoothTo('contact')">Get in Touch</a>
+      <a href="#projects" class="btn-ghost" onclick="event.preventDefault();smoothTo('projects')">View Projects</a>
+    </div>
+  </div>
+  <div class="hero-photo-side">
+    <div class="hero-photo-frame">
+      <div class="hero-photo-placeholder" id="photo-placeholder" onclick="document.getElementById('ep-photo-upload').click()">
+        <span>📷</span><small>Click to add photo</small>
+      </div>
+      <img id="hero-img" style="display:none;width:100%;height:auto;object-fit:contain;border-radius:2px;" alt="Shadha Mohammed">
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="scroll-line"></div><span>Scroll</span></div>
+</section>
+
+<!-- ── ABOUT ── -->
+<section id="about">
+  <div class="section-header reveal">
+    <div class="section-number">01</div>
+    <h2 class="section-title">About <em>Me</em></h2>
+  </div>
+  <div class="about-grid">
+    <div class="about-body reveal"><p id="about-bio-display"></p></div>
+    <div class="reveal">
+      <h3 style="font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem;">Skills</h3>
+      <p class="skill-hint">Click any skill to add images &amp; details</p>
+      <div class="skills-list" id="skills-display"></div>
+      <div class="lang-row" style="margin-top:2rem;">
+        <div class="lang-item"><span class="lang-name">Arabic</span><span class="lang-level">Native</span></div>
+        <div class="lang-item"><span class="lang-name">English</span><span class="lang-level">Professional Working</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── EXPERIENCE ── -->
+<section id="experience">
+  <div class="section-header reveal">
+    <div class="section-number">02</div>
+    <h2 class="section-title">Work <em>Experience</em></h2>
+  </div>
+  <div class="timeline reveal">
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="tl-meta"><div class="tl-role">Kindergarten Teacher</div><div class="tl-date">03/2024 – Present</div></div>
+      <div class="tl-company">Saudi School · Kuala Lumpur</div>
+      <ul class="tl-bullets">
+        <li>Improved student reading skills by implementing phonics-based instruction and guided reading activities.</li>
+        <li>Collaborated with colleagues to share resources, brainstorm ideas, and problem-solve classroom challenges.</li>
+        <li>Promoted learning through play with engaging activities, games and lessons.</li>
+        <li>Fostered a positive learning environment with collaborative group work and hands-on activities.</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="tl-meta"><div class="tl-role">ICT Teacher</div><div class="tl-date">01/2021 – 01/2022</div></div>
+      <div class="tl-company">MACIS · Malaysia</div>
+      <ul class="tl-bullets">
+        <li>Enhanced students' problem-solving skills by incorporating real-world scenarios in lesson plans.</li>
+        <li>Integrated coding exercises into curriculum, equipping students with valuable programming skills.</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="tl-meta"><div class="tl-role">Accounting</div><div class="tl-date">01/2021 – 01/2022</div></div>
+      <div class="tl-company">MICIS · Malaysia</div>
+      <ul class="tl-bullets">
+        <li>Mentored junior staff members, fostering professional growth within the accounting department.</li>
+        <li>Managed cash registers, ensuring accurate accounting and reducing discrepancies in daily reports.</li>
+        <li>Performed monthly financial reporting and recorded payments to keep the accounting system updated.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── EDUCATION ── -->
+<section id="education">
+  <div class="section-header reveal">
+    <div class="section-number">03</div>
+    <h2 class="section-title"><em>Education</em></h2>
+  </div>
+  <div class="edu-grid" id="edu-grid">
+    <div class="edu-card reveal" onclick="openEduModal(0)">
+      <div class="edu-degree">Master of Software Engineering</div>
+      <div class="edu-school">UPM — Malaysia</div>
+      <div class="edu-year">2024 – 2026</div>
+      <div class="edu-card-hint">🎓 Click to add certificate &amp; notes</div>
+    </div>
+    <div class="edu-card reveal" onclick="openEduModal(1)">
+      <div class="edu-degree">BA in Computer Science</div>
+      <div class="edu-school">University of the People — USA</div>
+      <div class="edu-year">2019 – 2023</div>
+      <div class="edu-card-hint">🎓 Click to add certificate &amp; notes</div>
+    </div>
+    <div class="edu-card reveal" onclick="openEduModal(2)">
+      <div class="edu-degree">Diploma in Early Childhood &amp; Education</div>
+      <div class="edu-school">Al-Takamoly — Malaysia</div>
+      <div class="edu-year">2017</div>
+      <div class="edu-card-hint">🎓 Click to add certificate &amp; notes</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PROJECTS ── -->
+<section id="projects">
+  <div class="section-header reveal">
+    <div class="section-number">04</div>
+    <h2 class="section-title">Projects &amp; <em>Websites</em></h2>
+  </div>
+  <div class="projects-grid" id="projects-display">
+    <div class="no-projects">No projects added yet — click the ✏️ button to add your websites and projects.</div>
+  </div>
+</section>
+
+<!-- ── CONTACT ── -->
+<section id="contact">
+  <div class="section-header reveal">
+    <div class="section-number">05</div>
+    <h2 class="section-title">Get in <em>Touch</em></h2>
+  </div>
+  <div class="contact-inner reveal">
+    <div class="contact-text">Let's build something <em>meaningful</em> together.</div>
+    <div class="contact-info">
+      <div class="contact-row"><div class="contact-icon">✉</div><a href="/cdn-cgi/l/email-protection#9cf1eff4fde8f4fda4aaacdcfbf1fdf5f0b2fff3f1" id="contact-email-display"><span class="__cf_email__" data-cfemail="a4c9d7ccc5d0ccc59c9294e4c3c9c5cdc88ac7cbc9">[email&#160;protected]</span></a></div>
+      <div class="contact-row"><div class="contact-icon">📱</div><span id="contact-phone-display">+60 1128182403</span></div>
+      <div class="contact-row"><div class="contact-icon">📍</div><span id="contact-location-display">Bukit Serdang, Malaysia</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>© 2025 <span id="footer-name">Shadha Mohammed</span></span>
+  <span>Software Engineer · Educator · Malaysia</span>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ══ STATE ══
+let projects = [];
+let skillData  = {};   // { skillName: { text, images:[base64] } }
+let eduData    = {     // index → { text, cert }
+  0:{text:'',cert:null},
+  1:{text:'',cert:null},
+  2:{text:'',cert:null}
+};
+const EDU_NAMES = ['Master of Software Engineering','BA in Computer Science','Diploma in Early Childhood & Education'];
+
+let activeSkill  = null;
+let activeEduIdx = null;
+
+// ══ HELPERS ══
+const $ = id => document.getElementById(id);
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function toB64(file,cb){ const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(file); }
+
+// ══ PANEL ══
+function togglePanel(){ $('edit-panel').classList.toggle('open'); }
+
+// ══ PHOTO ══
+function handlePhoto(e){
+  const f=e.target.files[0]; if(!f) return;
+  toB64(f,src=>{
+    $('ep-photo-preview').src=src; $('ep-photo-preview').style.display='block';
+    $('hero-img').src=src; $('hero-img').style.display='block';
+    $('photo-placeholder').style.display='none';
+  });
+}
+
+// ══ SKILL MODAL ══
+function openSkillModal(name){
+  activeSkill=name;
+  if(!skillData[name]) skillData[name]={text:'',images:[]};
+  $('skill-modal-title').innerHTML=`<em>${esc(name)}</em>`;
+  $('skill-textarea').value=skillData[name].text;
+  renderSkillImgs();
+  $('skill-modal').classList.add('open');
+}
+function closeSkillModal(){ $('skill-modal').classList.remove('open'); activeSkill=null; }
+
+function renderSkillImgs(){
+  const imgs=skillData[activeSkill]?.images||[];
+  const grid=$('skill-imgs-grid');
+  grid.innerHTML='';
+  imgs.forEach((src,i)=>{
+    const w=document.createElement('div'); w.className='sim-wrap';
+    w.innerHTML=`<img src="${src}" alt="img ${i+1}"><button class="sim-remove" onclick="removeSkillImg(${i})">✕</button>`;
+    grid.appendChild(w);
+  });
+  const addBtn=document.createElement('button'); addBtn.className='add-img-tile';
+  addBtn.innerHTML='<span class="tile-icon">📷</span>Add Images';
+  addBtn.onclick=()=>$('skill-img-input').click();
+  grid.appendChild(addBtn);
+}
+
+function handleSkillImages(e){
+  const files=Array.from(e.target.files); let done=0;
+  files.forEach(f=>toB64(f,src=>{
+    skillData[activeSkill].images.push(src);
+    if(++done===files.length) renderSkillImgs();
+  }));
+  e.target.value='';
+}
+function removeSkillImg(i){ skillData[activeSkill].images.splice(i,1); renderSkillImgs(); }
+function saveSkill(){
+  skillData[activeSkill].text=$('skill-textarea').value;
+  renderSkills(); closeSkillModal();
+}
+
+// ══ EDUCATION MODAL ══
+function openEduModal(idx){
+  activeEduIdx=idx;
+  const d=eduData[idx];
+  $('edu-modal-title').innerHTML=`<em>${esc(EDU_NAMES[idx])}</em>`;
+  $('edu-textarea').value=d.text;
+  if(d.cert){
+    $('cert-img-preview').src=d.cert;
+    $('cert-img-preview').style.display='block';
+    $('cert-drop').style.display='none';
+    $('cert-remove-btn').style.display='inline';
+  } else {
+    $('cert-img-preview').style.display='none';
+    $('cert-drop').style.display='block';
+    $('cert-remove-btn').style.display='none';
+  }
+  $('edu-modal').classList.add('open');
+}
+function closeEduModal(){ $('edu-modal').classList.remove('open'); activeEduIdx=null; }
+
+function handleCert(e){
+  const f=e.target.files[0]; if(!f) return;
+  toB64(f,src=>{
+    eduData[activeEduIdx].cert=src;
+    $('cert-img-preview').src=src; $('cert-img-preview').style.display='block';
+    $('cert-drop').style.display='none';
+    $('cert-remove-btn').style.display='inline';
+  }); e.target.value='';
+}
+function removeCert(){
+  eduData[activeEduIdx].cert=null;
+  $('cert-img-preview').style.display='none';
+  $('cert-drop').style.display='block';
+  $('cert-remove-btn').style.display='none';
+}
+function saveEdu(){
+  eduData[activeEduIdx].text=$('edu-textarea').value;
+  renderEduHints(); closeEduModal();
+}
+function renderEduHints(){
+  document.querySelectorAll('#edu-grid .edu-card').forEach((card,i)=>{
+    const d=eduData[i];
+    const hint=card.querySelector('.edu-card-hint');
+    const hasCert=!!d.cert, hasText=!!d.text.trim();
+    card.classList.toggle('has-data',hasCert||hasText);
+    if(hasCert && hasText) hint.textContent='✓ Certificate & notes added';
+    else if(hasCert)       hint.textContent='✓ Certificate added';
+    else if(hasText)       hint.textContent='✓ Notes added — click to edit';
+    else                   hint.textContent='🎓 Click to add certificate & notes';
+  });
+}
+
+// ══ SKILLS ══
+function renderSkills(){
+  const raw=$('ep-skills').value;
+  const list=raw.split(',').map(s=>s.trim()).filter(Boolean);
+  const sd=$('skills-display'); sd.innerHTML='';
+  list.forEach(name=>{
+    const span=document.createElement('span');
+    span.className='skill-tag';
+    span.textContent=name;
+    const d=skillData[name];
+    if(d&&(d.text||d.images.length)) span.classList.add('filled');
+    span.addEventListener('click',()=>openSkillModal(name));
+    sd.appendChild(span);
+  });
+}
+
+// ══ PROJECTS ══
+function addProject(title='',desc='',url='',thumb=''){
+  projects.push({id:Date.now(),title,desc,url,thumb});
+  renderProjectEntries(); renderProjects();
+}
+function removeProject(id){ projects=projects.filter(p=>p.id!==id); renderProjectEntries(); renderProjects(); }
+function renderProjectEntries(){
+  const list=$('projects-list'); list.innerHTML='';
+  projects.forEach(p=>{
+    const d=document.createElement('div'); d.className='project-entry';
+    d.innerHTML=`
+      <button class="remove-project" onclick="removeProject(${p.id})">✕ Remove</button>
+      <div class="ep-field"><label>Project Name</label><input type="text" value="${esc(p.title)}" oninput="updateProject(${p.id},'title',this.value)" placeholder="My Project"></div>
+      <div class="ep-field"><label>Description</label><input type="text" value="${esc(p.desc)}" oninput="updateProject(${p.id},'desc',this.value)" placeholder="Short description"></div>
+      <div class="ep-field"><label>Website URL</label><input type="text" value="${esc(p.url)}" oninput="updateProject(${p.id},'url',this.value)" placeholder="https://..."></div>
+      <div class="ep-field"><label>Thumbnail URL (optional)</label><input type="text" value="${esc(p.thumb)}" oninput="updateProject(${p.id},'thumb',this.value)" placeholder="https://image.com/..."></div>`;
+    list.appendChild(d);
+  });
+}
+function updateProject(id,key,val){ const p=projects.find(x=>x.id===id); if(p){p[key]=val;renderProjects();} }
+function renderProjects(){
+  const grid=$('projects-display');
+  if(!projects.length){ grid.innerHTML='<div class="no-projects">No projects added yet — click the ✏️ button to add your websites and projects.</div>'; return; }
+  grid.innerHTML=projects.map(p=>`
+    <div class="project-card">
+      ${p.thumb?`<img class="project-thumb" src="${p.thumb}" alt="${esc(p.title)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:``}
+      <div class="project-thumb-placeholder" style="${p.thumb?'display:none':''}">🌐</div>
+      <div class="project-body">
+        <div class="project-title">${p.title||'Untitled Project'}</div>
+        <div class="project-desc">${p.desc||''}</div>
+        ${p.url?`<a href="${p.url}" target="_blank" class="project-link">Visit Site →</a>`:''}
+      </div>
+    </div>`).join('');
+}
+
+// ══ MAIN UPDATE ══
+function update(){
+  const name=$('ep-name').value, bio=$('ep-bio').value,
+        email=$('ep-email').value, phone=$('ep-phone').value, loc=$('ep-location').value;
+  $('bio-display').textContent=bio;
+  $('about-bio-display').textContent=bio;
+  $('footer-name').textContent=name;
+  const parts=name.trim().split(' ');
+  document.querySelector('.hero-name').innerHTML=parts.length>1
+    ? parts.slice(0,-1).join(' ')+'<br><em>'+parts.slice(-1)[0]+'</em>'
+    : `<em>${name}</em>`;
+  $('contact-email-display').textContent=email;
+  $('contact-email-display').href='mailto:'+email;
+  $('contact-phone-display').textContent=phone;
+  $('contact-location-display').textContent=loc;
+  renderSkills();
+}
+
+// ══ CLOSE ON BACKDROP ══
+['skill-modal','edu-modal'].forEach(id=>{
+  $(id).addEventListener('click',e=>{ if(e.target===e.currentTarget) $(id).classList.remove('open'); });
+});
+
+// ══ SMOOTH SCROLL ══
+function smoothTo(id){
+  const el=document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ══ SAVE / DOWNLOAD ══
+function savePortfolio(){
+  const heroImgSrc = $('hero-img').style.display!=='none' ? $('hero-img').src : '';
+  const snap = {
+    name:   $('ep-name').value,
+    bio:    $('ep-bio').value,
+    email:  $('ep-email').value,
+    phone:  $('ep-phone').value,
+    loc:    $('ep-location').value,
+    skills: $('ep-skills').value,
+    photo:  heroImgSrc,
+    projects:  projects,
+    skillData: skillData,
+    eduData:   eduData
+  };
+  const restoreScript = `\n<script>\n(function(){\n  const _s=${JSON.stringify(snap)};\n  window.addEventListener('DOMContentLoaded',function(){\n    document.getElementById('ep-name').value=_s.name;\n    document.getElementById('ep-bio').value=_s.bio;\n    document.getElementById('ep-email').value=_s.email;\n    document.getElementById('ep-phone').value=_s.phone;\n    document.getElementById('ep-location').value=_s.loc;\n    document.getElementById('ep-skills').value=_s.skills;\n    if(_s.photo){var hi=document.getElementById('hero-img');hi.src=_s.photo;hi.style.display='block';document.getElementById('photo-placeholder').style.display='none';var pp=document.getElementById('ep-photo-preview');pp.src=_s.photo;pp.style.display='block';}\n    window.projects=_s.projects||[];\n    window.skillData=_s.skillData||{};\n    window.eduData=_s.eduData||{0:{text:'',cert:null},1:{text:'',cert:null},2:{text:'',cert:null}};\n    update();renderProjectEntries();renderProjects();renderEduHints();\n  });\n})();\n<\/script>`;
+  const html = document.documentElement.outerHTML.replace('</body>', restoreScript+'\n</body>');
+  const blob = new Blob([html],{type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'shadha_portfolio.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ══ SCROLL REVEAL ══
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ══ INIT ══
+update();
+renderProjectEntries();
+renderProjects();
+renderEduHints();
+</script>
+</body>
+</html>
